@@ -28,10 +28,11 @@ p.push(Position.new(8, 0)) # 5
 p.push(Position.new(24, 0)) # 6
 
 class Member
-  def initialize(a, i, l)
+  def initialize(a, i, p1, p2)
     @area = a
     @i = i
-    @length = l
+    #@length = l
+    @l = calculate_length(p)
     @k = set_matrix(a, i, l)
     @x = 0
     @y = 0
@@ -46,6 +47,11 @@ class Member
   end
   def set_moment(m)
     @m = m
+  end
+
+  def calculate_length(p)
+    l = 
+    l
   end
 
   def set_matrix(a, i, l)
@@ -93,8 +99,11 @@ area = b*h
 
 # make array of Members
 beams = Array.new(nelem)
-
 for i in 0..(beams.size()-1)
-  beams[i] = Member.new(area, i_all, l[i])
+  beams[i] = Member.new(area, i_all, p[i], p[i+1]) # doesn't work
   beams[i].printMat()
 end
+
+
+
+
