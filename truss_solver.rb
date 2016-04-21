@@ -33,11 +33,12 @@ class NodeNumbers
   end
 end
 =end
-class MatrixClass
-  def initialize(m_size, nodes)
+class MatrixSClass
+  def initialize(m_size, nodes, f)
     @size = m_size
     @m = Matrix.zero(m_size)
     @nodes = nodes
+    @f = f
   end
 end
 
@@ -211,6 +212,7 @@ p.push(ElemPositions.new(24.0, 0,     24.0, 16.25)) # 7
 f = Array.new() # elements
 f.push(ElemForces.new(0, 0, 0, 50, 0, -125))   # 1
 f.push(ElemForces.new(50, 0, -125, 0, 0, 0))   # 2
+f_s_vec = [50, 0, -125]         # s TODO I don't like this
 =begin
 f.push(ElemForces.new(0, 0, 0, 0, 0, 50))   # 1
 f.push(ElemForces.new(0, 0, 50, 0, 0, 0))   # 2
@@ -227,7 +229,7 @@ f.push(ElemForces.new(0, 0, -15, 0, 0, 0))  # 7
 #area = b*h
 mom_inertia = 310
 area = 11.8
-$s = MatrixClass.new(3, n[1].instance_variable_get(:@nodes))
+$s = MatrixSClass.new(3, n[1].instance_variable_get(:@nodes), f_s_vec)
 
 # make array of Members
 beams = Array.new(nelem)
@@ -255,4 +257,5 @@ beams.each_index { |i|
     end
   end
 }
-p $s
+d = $s.instance_variable_get(:@m).transpose * $s.instance_variable_get(:@f).transpose
+p d
