@@ -3,10 +3,19 @@ require 'pp'
 
 # inputs
 $DOF_per_node = 3
+=begin
 nnodes = 6
 nelem  = 7
 loads = Matrix[[0, 0, 0], [0, 0, 50], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, -15, 0]]
 e = Array[10200, 10200, 10200, 10200, 10200, 10200, 10200]
+#l = Array[16, 8, 8, 16, 18.113, 18.133, 16.25]
+b = 1
+h = 0.25
+=end
+nnodes = 3
+nelem  = 2
+loads = Matrix[[0, 0, 0], [0, 0, 50], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, -15, 0]]
+e = Array[29000, 29000]
 #l = Array[16, 8, 8, 16, 18.113, 18.133, 16.25]
 b = 1
 h = 0.25
@@ -221,8 +230,10 @@ f.push(ElemForces.new(0, 0, -15, 0, 0, 0))  # 7
 
 
 # calculate some parameteres
-mom_inertia = (b*h**3)/12
-area = b*h
+#mom_inertia = (b*h**3)/12 TODO
+#area = b*h
+mom_intertia = 310
+area = 11.8
 
 # make array of Members
 beams = Array.new(nelem)
