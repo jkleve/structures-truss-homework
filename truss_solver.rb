@@ -21,12 +21,43 @@ b = 1
 h = 0.25
 
 # definitions
+=begin
+class NodeNumbers
+  def initialize(start1, start2)
+    nodes1 = Array.new()
+    nodes2 = Array.new()
+    for i in 0..2
+      nodes1.push(start1 + i)
+      nodes2.push(start2 + i)
+    end
+  end
+end
+=end
+class MatrixClass
+  def initialize(m_size, nodes)
+    @size = m_size
+    @m = Matrix.zero(m_size)
+    @nodes = nodes
+  end
+end
+
+class NodeNumbers
+  def initialize(start)
+    @nodes = Array.new()
+    for i in 0..2
+      @nodes.push(start + i)
+    end
+  end
+end
+
 class ElemPositions
-  def initialize(x1, y1, x2, y2)
+  def initialize(x1, y1, n1, x2, y2, n2)
     @x1 = x1
     @y1 = y1
+    @nodes1 = n1
     @x2 = x2
     @y2 = y2
+    @nodes2 = n2
   end
 end
 
@@ -50,6 +81,7 @@ class Member
     @mom_iner = i
     @e = e
     @positions = p
+    @nodes = get_nodes(p)
     @forces = f
     @cos = nil
     @sin = nil
@@ -66,6 +98,15 @@ class Member
     #printMat(@big_k)
 
     #@k_big = convert_to_global(@cos, @sin, @area, @mom_iner, @length)
+  end
+
+  def get_nodes(p)
+    r = Array.new()
+    nodes1 = p.instance_variable_get(:@nodes1).instance_variable_get(:@nodes)
+    nodes2 = p.instance_variable_get(:@nodes2).instance_variable_get(:@nodes)
+    nodes1.each{ |node| r.push(node) }
+    nodes2.each{ |node| r.push(node) }
+    r
   end
 
   def calculate_properties(pos)
@@ -115,53 +156,7 @@ class Member
     m[5,5] = (e*i/l**3)* (4.0*l**2.0)
     m
   end
-=begin
-  def convert_to_global(c, s, a, i, l)
-    k_big = Matrix.zero($DOF_per_node*2)
-    k_big[0,0] = a*l**2*c**2/i + 12*s**2
-    k_big[0,1] = (a*l**2/i - 12)*c*s
-    k_big[0,2] = -6*l*s
-    k_big[0,3] = -1*(a*l**2/i*c**2 + 12*s**2)
-    k_big[0,4] = -1*(a*l**2/i - 12)*c*s
-    k_big[0,5] = -6*l*s
 
-    k_big[1,0] = (a*l**2/i - 12)*c*s
-    k_big[1,1] = a*l**2*s**2/i + 12*c**2
-    k_big[1,2] = 6*l*c
-    k_big[1,3] = -1*(a*l**2/i - 12)*c*s
-    k_big[1,4] = -1*(a*l**2*s**2/i + 12*c**2)
-    k_big[1,5] = 6*l*c
-
-    k_big[2,0] = -6*l*s
-    k_big[2,1] = 6*l*c
-    k_big[2,2] = 4*l**2
-    k_big[2,3] = 6*l*s
-    k_big[2,4] = -6*l*c
-    k_big[2,5] = 2*l**2
-
-    k_big[3,0] = -1*(a*l**2*c**2/i + 12*s**2)
-    k_big[3,1] = -1*(a*l**2/i - 12)*c*s
-    k_big[3,2] = 6*l*s
-    k_big[3,3] = a*l**2*c**2/i + 12*s**2
-    k_big[3,4] = (a*l**2/i - 12)*c*s
-    k_big[3,5] = 6*l*s
-
-    k_big[4,0] = -1*(a*l**2/i - 12)*c*s
-    k_big[4,1] = -1*(a*l**2*s**2/i + 12*c**2)
-    k_big[4,2] = -6*l*c
-    k_big[4,3] = (a*l**2/i - 12)*c*s
-    k_big[4,4] = a*l**2*s**2/i + 12*c**2
-    k_big[4,5] = -6*l*c
-
-    k_big[5,0] = -6*l*s
-    k_big[5,1] = 6*l*c
-    k_big[5,2] = 2*l**2
-    k_big[5,3] = 6*l*s
-    k_big[5,4] = -6*l*c
-    k_big[5,5] = 4*l**2
-    k_big
-  end
-=end
   def printMatrix()
     for i in 0..($DOF_per_node*2-1)
       print "["
@@ -193,9 +188,17 @@ end
 #==== script start =====
 
 # input TODO have this be read in from file
+# Nodes
+n = Array.new()
+n.push(NodeNumbers.new(1))
+n.push(NodeNumbers.new(4))
+n.push(NodeNumbers.new(7))
+
+# Elements
 p = Array.new() # elements
-p.push(ElemPositions.new(0,  0, 10.0, 20)) # 1
-p.push(ElemPositions.new(10, 20, 30, 20)) # 2
+#p n[0].instance_variable_get(:@nodes)
+p.push(ElemPositions.new(0,  0, n[0], 10.0, 20.0, n[1])) # 1
+p.push(ElemPositions.new(10.0, 20.0, n[1], 30.0, 20.0, n[2])) # 2
 =begin
 p.push(ElemPositions.new(0,  16.25, 16.0, 16.25)) # 1
 p.push(ElemPositions.new(16, 16.25, 24.0, 16.25)) # 2
@@ -224,6 +227,7 @@ f.push(ElemForces.new(0, 0, -15, 0, 0, 0))  # 7
 #area = b*h
 mom_inertia = 310
 area = 11.8
+$s = MatrixClass.new(3, n[1].instance_variable_get(:@nodes))
 
 # make array of Members
 beams = Array.new(nelem)
@@ -233,21 +237,22 @@ beams.each_index { |i|
   # Print matrix
   printf "Matrix %d\n", (i+1)
   beams[i].printMatrix()
-  #beams[i].printMat(beams[i].instance_variable_get(:@t))
-  t = beams[i].instance_variable_get(:@t)
-  k = beams[i].instance_variable_get(:@k)
-=begin
-  pp k
-  p 'k'
-  beams[i].printMat(k)
-  p ''
-  t_trans = t.transpose
-  beams[i].printMat(t)
-  k_1 = t_trans*k
-  p ''
-  beams[i].printMat(t_trans)
-=end
-  #big_k = t_trans*k
-  #beams[i].printMat(big_k)
-  #pp beams[i].instance_variable_get(:@t)
+
+  # build s
+  a1 = Array.new()
+  a2 = Array.new()
+  for j in 0..($DOF_per_node*2-1)
+    for k in 0..($s.instance_variable_get(:@size)-1)
+      if ($s.instance_variable_get(:@nodes)[k] == beams[i].instance_variable_get(:@nodes)[j])
+        a1.push(j)
+        a2.push(k)
+      end
+    end
+  end
+  for j in 0..(a1.size()-1)
+    for k in 0..(a1.size()-1)
+      $s.instance_variable_get(:@m)[a2[j],a2[k]] += beams[i].instance_variable_get(:@k_big)[a1[j],a1[k]]
+    end
+  end
 }
+p $s
