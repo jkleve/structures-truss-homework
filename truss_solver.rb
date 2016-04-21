@@ -45,10 +45,17 @@ class Member
     @cos = nil
     @sin = nil
     @length = nil
+    @t = nil
 
     calculate_properties(p) # must come before set_matrix
+    @t = calculate_T()
 
-    #@k = set_matrix(@area, @mom_iner, @e, @length)
+
+    @k = set_matrix(@area, @mom_iner, @e, @length)
+
+    @big_k = @t.transpose*@k*@t # TODO which one is right
+    printMat(@big_k)
+
     @k_big = convert_to_global(@cos, @sin, @area, @mom_iner, @length)
   end
 
@@ -58,6 +65,30 @@ class Member
     @length = Math.sqrt(dx**2 + dy**2)
     @cos = dx/@length
     @sin = dy/@length
+  end
+
+  def calculate_T()
+    t = Matrix.zero($DOF_per_node*2)
+    t[0,0] = @cos
+    t[0,1] = @sin
+    t[1,0] = -1*@sin
+    t[1,1] = @cos
+    t[2,2] = 1
+    t[3,3] = @cos
+    t[3,4] = @sin
+    t[4,3] = -1*@sin
+    t[4,4] = @cos
+    t[5,5] = 1
+    t
+
+=begin
+    @t = [[ @c, @s, 0,   0,  0, 0],
+          [-1*@s, @c, 0,   0,  0, 0],
+          [  0,  0, 1,   0,  0, 0],
+          [  0,  0, 0,  @c, @s, 0],
+          [  0,  0, 0, -1*@s, @c, 0],
+          [  0,  0, 0,   0,  0, 1]]
+=end
   end
 
   def set_matrix(a, i, e, l)
@@ -195,10 +226,27 @@ area = b*h
 
 # make array of Members
 beams = Array.new(nelem)
-p "Local matrices in Global coordinates"
+p 'Local matrices in Global coordinates'
 beams.each_index { |i|
   beams[i] = Member.new(area, mom_inertia, e[i], p[i], f[i])
   # Print matrix
   printf "Matrix %d\n", (i+1)
   beams[i].printMatrix()
+  #beams[i].printMat(beams[i].instance_variable_get(:@t))
+  t = beams[i].instance_variable_get(:@t)
+  k = beams[i].instance_variable_get(:@k)
+=begin
+  pp k
+  p 'k'
+  beams[i].printMat(k)
+  p ''
+  t_trans = t.transpose
+  beams[i].printMat(t)
+  k_1 = t_trans*k
+  p ''
+  beams[i].printMat(t_trans)
+=end
+  #big_k = t_trans*k
+  #beams[i].printMat(big_k)
+  #pp beams[i].instance_variable_get(:@t)
 }
