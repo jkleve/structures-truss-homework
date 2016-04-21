@@ -40,7 +40,6 @@ class Member
     @area = a
     @mom_iner = i
     @e = e
-    #@e = # TODO
     @positions = p
     @forces = f
     @cos = nil
@@ -50,7 +49,7 @@ class Member
     calculate_properties(p) # must come before set_matrix
 
     @k = set_matrix(@area, @mom_iner, @e, @length)
-    pp @k
+    @K =
   end
 
   def calculate_properties(pos)
@@ -63,37 +62,49 @@ class Member
 
   def set_matrix(a, i, e, l)
     m = Matrix.zero(6)
-    m[0,0] = (e*i/l**3)* (a*l**2/i)
-    m[0,3] = (e*i/l**3)*(-a*l**2/i)
-    m[1,1] = (e*i/l**3)*        12
-    m[1,2] = (e*i/l**3)*      (6*l)
-    m[1,4] = (e*i/l**3)*       -12
-    m[1,5] = (e*i/l**3)*      (6*l)
-    m[2,1] = (e*i/l**3)*      (6*l)
-    m[2,2] = (e*i/l**3)*   (4*l**2)
-    m[2,4] = (e*i/l**3)*     (-6*l)
-    m[2,5] = (e*i/l**3)*   (2*l**2)
-    m[3,0] = (e*i/l**3)*(-a*l**2/i)
-    m[3,3] = (e*i/l**3)* (a*l**2/i)
-    m[4,1] = (e*i/l**3)*       -12
-    m[4,2] = (e*i/l**3)*     (-6*l)
-    m[4,4] = (e*i/l**3)*        12
-    m[4,5] = (e*i/l**3)*     (-6*l)
-    m[5,1] = (e*i/l**3)*      (6*l)
-    m[5,2] = (e*i/l**3)*   (2*l**2)
-    m[5,4] = (e*i/l**3)*     (-6*l)
-    m[5,5] = (e*i/l**3)*   (4*l**2)
+=begin
+    m = [[ (e*i/l**3)*(a*l**2.0/i),                  0,                       0, (e*i/l**3)*(-a*l**2.0/i),                   0,                       0],
+         [                       0,    (e*i/l**3)*12.0,      (e*i/l**3)*(6.0*l),                        0,    (e*i/l**3)*-12.0,      (e*i/l**3)*(6.0*l)],
+         [                       0, (e*i/l**3)*(6.0*l), (e*i/l**3)*(4.0*l**2.0),                        0, (e*i/l**3)*(-6.0*l), (e*i/l**3)*(2.0*l**2.0)],
+         [(e*i/l**3)*(-a*l**2.0/i),                  0,                       0,  (e*i/l**3)*(a*l**2.0/i),                   0,                       0],
+         [                       0,              -12.0,     (e*i/l**3)*(-6.0*l),                        0,                12.0,     (e*i/l**3)*(-6.0*l)],
+         [                       0, (e*i/l**3)*(6.0*l), (e*i/l**3)*(2.0*l**2.0),                        0, (e*i/l**3)*(-6.0*l), (e*i/l**3)*(4.0*l**2.0)]]
+    p m[0,0]
+=end
+    m[0,0] = (e*i/l**3)* (a*l**2.0/i)
+    m[0,3] = (e*i/l**3)*(-a*l**2.0/i)
+    m[1,1] = (e*i/l**3)*        12.0
+    m[1,2] = (e*i/l**3)*      (6.0*l)
+    m[1,4] = (e*i/l**3)*       -12.0
+    m[1,5] = (e*i/l**3)*      (6.0*l)
+    m[2,1] = (e*i/l**3)*      (6.0*l)
+    m[2,2] = (e*i/l**3)* (4.0*l**2.0)
+    m[2,4] = (e*i/l**3)*     (-6.0*l)
+    m[2,5] = (e*i/l**3)* (2.0*l**2.0)
+    m[3,0] = (e*i/l**3)*(-a*l**2.0/i)
+    m[3,3] = (e*i/l**3)* (a*l**2.0/i)
+    m[4,1] = (e*i/l**3)*       -12.0
+    m[4,2] = (e*i/l**3)*     (-6.0*l)
+    m[4,4] = (e*i/l**3)*        12.0
+    m[4,5] = (e*i/l**3)*     (-6.0*l)
+    m[5,1] = (e*i/l**3)*      (6.0*l)
+    m[5,2] = (e*i/l**3)* (2.0*l**2.0)
+    m[5,4] = (e*i/l**3)*     (-6.0*l)
+    m[5,5] = (e*i/l**3)* (4.0*l**2.0)
     m
   end
 
-  def printMat()
+  def printMat
     for i in 0..($DOF_per_node*2-1)
+      print "["
       for j in 0..($DOF_per_node*2-1)
+        #puts @k[i,j]
         printf "%10.2f", @k[i,j]
+        #p @k[i,j].is_a?(String)
       end
+      print "]"
       puts("")
     end
-    puts("")
   end
 end
 
@@ -130,7 +141,10 @@ area = b*h
 # make array of Members
 beams = Array.new(nelem)
 beams.each_index { |i|
-  beams[i] = Member.new(area, mom_inertia, e, p[i], f[i])
+  beams[i] = Member.new(area, mom_inertia, e[i], p[i], f[i])
+  # Print matrix
+  printf "Matrix %d\n", (i+1)
+  beams[i].printMat()
 }
 =begin
 for i in 0..(beams.size()-1)
