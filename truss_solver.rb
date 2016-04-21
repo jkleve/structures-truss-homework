@@ -48,8 +48,8 @@ class Member
 
     calculate_properties(p) # must come before set_matrix
 
-    @k = set_matrix(@area, @mom_iner, @e, @length)
-    @K =
+    #@k = set_matrix(@area, @mom_iner, @e, @length)
+    @k_big = convert_to_global(@cos, @sin, @area, @mom_iner, @length)
   end
 
   def calculate_properties(pos)
@@ -61,7 +61,7 @@ class Member
   end
 
   def set_matrix(a, i, e, l)
-    m = Matrix.zero(6)
+    m = Matrix.zero($DOF_per_node)
 =begin
     m = [[ (e*i/l**3)*(a*l**2.0/i),                  0,                       0, (e*i/l**3)*(-a*l**2.0/i),                   0,                       0],
          [                       0,    (e*i/l**3)*12.0,      (e*i/l**3)*(6.0*l),                        0,    (e*i/l**3)*-12.0,      (e*i/l**3)*(6.0*l)],
@@ -94,12 +94,72 @@ class Member
     m
   end
 
-  def printMat
+  def convert_to_global(c, s, a, i, l)
+    k_big = Matrix.zero($DOF_per_node)
+    k_big[0,0] = a*l**2*c**2/i + 12*s**2
+    k_big[0,1] = (a*l**2/i - 12)*c*s
+    k_big[0,2] = -6*l*s
+    k_big[0,3] = -1*(a*l**2/i*c**2 + 12*s**2)
+    k_big[0,4] = -1*(a*l**2/i - 12)*c*s
+    k_big[0,5] = -6*l*s
+
+    k_big[1,0] = (a*l**2/i - 12)*c*s
+    k_big[1,1] = a*l**2*s**2/i + 12*c**2
+    k_big[1,2] = 6*l*c
+    k_big[1,3] = -1*(a*l**2/i - 12)*c*s
+    k_big[1,4] = -1*(a*l**2*s**2/i + 12*c**2)
+    k_big[1,5] = 6*l*c
+
+    k_big[2,0] = -6*l*s
+    k_big[2,1] = 6*l*c
+    k_big[2,2] = 4*l**2
+    k_big[2,3] = 6*l*s
+    k_big[2,4] = -6*l*c
+    k_big[2,5] = 2*l**2
+
+    k_big[3,0] = -1*(a*l**2*c**2/i + 12*s**2)
+    k_big[3,1] = -1*(a*l**2/i - 12)*c*s
+    k_big[3,2] = 6*l*s
+    k_big[3,3] = a*l**2*c**2/i + 12*s**2
+    k_big[3,4] = (a*l**2/i - 12)*c*s
+    k_big[3,5] = 6*l*s
+=begin
+    k_big[4,0] = -1*(a*l**2/i - 12)*c*s
+    k_big[4,1] = -1*(a*l**2*s**2/i + 12*c**2)
+    k_big[4,2] = -6*l*c
+    k_big[4,3] = (a*l**2/i - 12)*c*s
+    k_big[4,4] = a*l**2*s**2/i + 12*c**2
+    k_big[4,5] = -6*l*c
+
+    k_big[5,0] = -6*l*s
+    k_big[5,1] = 6*l*c
+    k_big[5,2] = 2*l**2
+    k_big[5,3] = 6*l*s
+    k_big[5,4] = -6*l*c
+    k_big[5,5] = 4*l**2
+=end
+    k_big
+  end
+
+  def printMatrix()
     for i in 0..($DOF_per_node*2-1)
       print "["
       for j in 0..($DOF_per_node*2-1)
         #puts @k[i,j]
-        printf "%10.2f", @k[i,j]
+        printf "%10.2f", @k_big[i,j]
+        #p @k[i,j].is_a?(String)
+      end
+      print "]"
+      puts("")
+    end
+  end
+
+  def printMat(m)
+    for i in 0..($DOF_per_node*2-1)
+      print "["
+      for j in 0..($DOF_per_node*2-1)
+        #puts @k[i,j]
+        printf "%10.2f", m[i,j]
         #p @k[i,j].is_a?(String)
       end
       print "]"
@@ -144,8 +204,9 @@ beams.each_index { |i|
   beams[i] = Member.new(area, mom_inertia, e[i], p[i], f[i])
   # Print matrix
   printf "Matrix %d\n", (i+1)
-  beams[i].printMat()
+  beams[i].printMatrix()
 }
+puts
 =begin
 for i in 0..(beams.size()-1)
   beams[i] = Member.new(area, mom_inertia, p[i])
