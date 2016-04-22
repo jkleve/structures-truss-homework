@@ -189,14 +189,20 @@ class Member
     end
   end
 
-  def printMat(m)
-    for i in 0..($DOF_per_node*2-1)
+  def self.printMat(m, size)
+    for i in 0..(size-1)
       print "["
-      for j in 0..($DOF_per_node*2-1)
+      for j in 0..(size-1)
         printf "%10.2f", m[i,j]
       end
       print "]"
       puts("")
+    end
+  end
+
+  def self.printColumnVec(v, size)
+    for i in 0..(size-1)
+      printf "[ %12.2f ]", v[i]
     end
   end
 end
@@ -321,4 +327,30 @@ beams.each_index { |i|
   # calculate global force reations
   f = beams[i].instance_variable_get(:@t).transpose * q
   p f
+}
+
+
+# Print output
+puts "Output"
+beams.each_index { |i|
+  # local k
+  printf "Member %d\n", i
+  puts "k"
+  Member.printMat(beams[i].instance_variable_get(:@k), $DOF_per_node*2)
+
+  # global K
+  puts "K"
+  Member.printMat(beams[i].instance_variable_get(:@k_big), $DOF_per_node*2)
+
+  # S
+  puts "S"
+  Member.printMat($s.instance_variable_get(:@m), $DOF_per_node)
+
+  # d
+  puts "d"
+  Member.printColumnVec($d, $DOF_per_node)
+
+  # Q
+
+  # F
 }
