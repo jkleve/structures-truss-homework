@@ -88,6 +88,10 @@ class Member
     @sin = nil
     @length = nil
     @t = nil
+    @u = nil # not set until set_u() is called
+    @q = nil # not set until set_q() is called
+    @sigma = nil # not set until set_stress() is called
+    @epsilon = nil # not set until set_strain() is called
 
     calculate_properties(p) # must come before set_matrix
     @t = calculate_T()
@@ -158,6 +162,22 @@ class Member
     m
   end
 
+  def set_u(u)
+    @u = u
+  end
+
+  def set_q(q)
+    @q = q
+  end
+
+  def set_stress(s)
+    @sigma = s
+  end
+
+  def set_strain(s)
+    @epsilon = s
+  end
+
   def printMatrix()
     for i in 0..($DOF_per_node*2-1)
       print "["
@@ -210,9 +230,9 @@ p.push(ElemPositions.new(16.0, 16.25,  24.0, 0))    # 6
 p.push(ElemPositions.new(24.0, 0,     24.0, 16.25)) # 7
 =end
 f = Array.new() # elements
-f.push(ElemForces.new(0, 0, 0, 50, 0, -125))   # 1
-f.push(ElemForces.new(50, 0, -125, 0, 0, 0))   # 2
-f_s_vec = [50, 0, -125]         # s TODO I don't like this
+f.push(ElemForces.new(0, 0, 0, 50, 0, -1500))   # 1
+f.push(ElemForces.new(50, 0, -1500, 0, 0, 0))   # 2
+f_s_vec = [50, 0, -1500]         # s TODO I don't like this
 =begin
 f.push(ElemForces.new(0, 0, 0, 0, 0, 50))   # 1
 f.push(ElemForces.new(0, 0, 50, 0, 0, 0))   # 2
@@ -248,6 +268,7 @@ beams.each_index { |i|
       if ($s.instance_variable_get(:@nodes)[k] == beams[i].instance_variable_get(:@nodes)[j])
         a1.push(j)
         a2.push(k)
+        break
       end
     end
   end
@@ -257,5 +278,47 @@ beams.each_index { |i|
     end
   end
 }
-d = $s.instance_variable_get(:@m).transpose * $s.instance_variable_get(:@f).transpose
-p d
+
+# Calculate d
+# get P as a column vector
+p_column_vec = Matrix.column_vector($s.instance_variable_get(:@f))
+# d = P^-1 * F
+$d = $s.instance_variable_get(:@m).inverse * p_column_vec # TODO change d back to local variable if possible
+
+# Calculate u for each member
+beams.each_index { |i|
+  # calculate v
+  v = Array.new()
+  for j in 0..($DOF_per_node*2-1)
+    contained = false
+    l = 0
+    for k in 0..($s.instance_variable_get(:@size)-1)
+      if (beams[i].instance_variable_get(:@nodes)[j] == $s.instance_variable_get(:@nodes)[k])
+        contained = true
+        l = k
+      end
+    end
+    if contained
+      v.push($d[l,0])
+    else
+      v.push(0.0)
+    end
+  end
+  v_column = Matrix.column_vector(v)
+  u = beams[i].instance_variable_get(:@t) * v_column
+  beams[i].set_u(u)
+
+  # calculate Q
+  q = beams[i].instance_variable_get(:@k) * u
+  beams[i].set_q(q)
+
+  # calculate stress
+  beams[i].set_stress((-1*q[0,0])/beams[i].instance_variable_get(:@area))
+
+  # calculate strain
+  beams[i].set_strain(beams[i].instance_variable_get(:@sigma)/beams[i].instance_variable_get(:@e))
+
+  # calculate global force reations
+  f = beams[i].instance_variable_get(:@t).transpose * q
+  p f
+}
