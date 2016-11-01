@@ -56,7 +56,7 @@ class Member
     dx = (pos.instance_variable_get(:@x2) - pos.instance_variable_get(:@x1)).abs
     dy = (pos.instance_variable_get(:@y2) - pos.instance_variable_get(:@y1)).abs
     @length = Math.sqrt(dx**2 + dy**2)
-    @cos = dx/@length
+    @cos = dx/@length # TODO will these get the negative angles correctly?
     @sin = dy/@length
   end
 
